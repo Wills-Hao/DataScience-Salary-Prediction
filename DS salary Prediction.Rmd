@@ -1,0 +1,123 @@
+---
+title: "DS salary Prediction"
+output: pdf_document
+date: "2023-10-29"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(warning = FALSE, message = FALSE, error = TRUE)
+library(tidyverse)
+library(dplyr)
+library(GGally)
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r read set}
+ds_dataset <- read.csv("salaries.csv")
+head(ds_dataset)
+```
+
+## Including Plots
+
+You can also embed plots, for example:
+
+```{r cleaning, echo=FALSE}
+nrow(ds_dataset)
+ds_df <- ds_dataset %>%
+         na.omit %>%
+         select(-salary, -salary_currency)
+
+categorical_vars <- c('work_year', 'experience_level', 'employment_type', 
+                      'job_title', 'remote_ratio', 'company_location', 
+                      'company_size')
+north_america <- c('CA', 'US', 'PR')
+south_america <- c('AR', 'BR', 'CL', 'CO', 'EC', 'HN', 'MX', 'PE')
+europe <- c('AD', 'AE', 'AM', 'AS', 'AT', 'BA', 'BE', 'BS', 'CF', 'CH', 'CZ',
+            'DE', 'DK', 'DZ', 'EE', 'EG', 'ES', 'FI', 'FR', 'GB', 'GH', 'GR',
+            'HR', 'HU', 'IE', 'IL', 'IT', 'LT', 'LU', 'LV', 'MD', 'MT', 'MU',
+            'NL', 'NO', 'PL', 'PT', 'RO', 'RU', 'SE', 'SI', 'UA')
+asia <- c('CN', 'HK', 'ID', 'IN', 'IQ', 'IR', 'JP', 'KR', 'MY', 'PH', 'PK',
+          'SA', 'SG', 'TH', 'TR', 'QA')
+africa <- c('KE', 'NG', 'ZA')
+oceania <- c('AU', 'NZ')
+  
+ds_df <- ds_df %>%
+        mutate(
+          job_title = case_when(
+            grepl("Machine Learn", job_title) ~ "ML",
+            grepl("Data Scie|Applied|Model", job_title) ~ "Data Scientists",
+            grepl("Data Anal", job_title) ~ "Data Analytics",
+            grepl("Data Visual|Power", job_title) ~ "Data Visualization",
+            grepl("Architect", job_title) ~ "Data Architect",
+            grepl("Decision|Strategy|Insight|Consultant", job_title) ~ 
+              "Data consultant",
+            grepl("AI", job_title) ~ "AI",
+            grepl("Cloud", job_title) ~ "Cloud",
+            grepl("Engin|ETL", job_title) ~ "Engineer",
+            grepl("BI|Business", job_title) ~ "Business Intelligence",
+            grepl("Research", job_title) ~ "Research",
+            grepl("Specia", job_title) ~ "Specialist",
+            grepl("Manage", job_title) ~ "Manager",
+            TRUE ~ job_title),
+          company_location = case_when(
+            company_location %in% north_america ~ 'NorthAmerica',
+            company_location %in% south_america ~ 'SouthAmerica',
+            company_location %in% europe ~ 'Europe',
+            company_location %in% asia ~ 'Aisa',
+            company_location %in% africa ~ 'Africa',
+            company_location %in% oceania ~ 'Oceania',
+            TRUE ~ company_location),
+          across(categorical_vars, as.factor)) %>%
+          select(-employee_residence)
+ds_df
+levels(ds_df$company_location)
+```
+
+```{r cleaning, echo=FALSE}
+
+ds_df %>% 
+    group_by(work_year) %>%
+    summarise(avg = mean(salary_in_usd))
+
+ds_df %>% 
+    group_by(experience_level) %>%
+    summarise(avg = mean(salary_in_usd))
+
+ds_df %>% 
+    group_by(employment_type) %>%
+    summarise(avg = mean(salary_in_usd))
+
+ds_df %>% 
+    group_by(job_title) %>%
+    summarise(avg = mean(salary_in_usd))
+
+ds_df %>% 
+    group_by(remote_ratio) %>%
+    summarise(avg = mean(salary_in_usd))
+
+ds_df %>% 
+    group_by(company_location) %>%
+    summarise(avg = mean(salary_in_usd))
+
+ds_df %>% 
+    group_by(company_size) %>%
+    summarise(avg = mean(salary_in_usd))
+
+```
+
+
+
+```{r model, echo=FALSE}
+full <- lm(salary_in_usd ~., ds_df)
+summary(full)
+
+```
+
+
+
+
